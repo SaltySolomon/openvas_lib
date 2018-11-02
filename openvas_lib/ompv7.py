@@ -47,1108 +47,1234 @@ __all__ = ["OMPv7"]
 #
 # ------------------------------------------------------------------------------
 class OMPv7(OMP):
-	"""
-	Internal manager for OpenVAS low level operations.
+    """
+    Internal manager for OpenVAS low level operations.
 
-	..note:
-		This class is based in code from the original OpenVAS plugin:
+    ..note:
+        This class is based in code from the original OpenVAS plugin:
 
-		https://pypi.python.org/pypi/OpenVAS.omplib
+        https://pypi.python.org/pypi/OpenVAS.omplib
 
-	..warning:
-		This code is only compatible with OMP 4.0.
-	"""
+    ..warning:
+        This code is only compatible with OMP 4.0.
+    """
 
-	# ----------------------------------------------------------------------
-	def __init__(self, omp_manager):
-		"""
-		Constructor.
+    # ----------------------------------------------------------------------
+    def __init__(self, omp_manager):
+        """
+        Constructor.
 
-		:param omp_manager: _OMPManager object.
-		:type omp_manager: ConnectionManager
-		"""
-		# Call to super
-		super(OMPv7, self).__init__(omp_manager)
+        :param omp_manager: _OMPManager object.
+        :type omp_manager: ConnectionManager
+        """
+        # Call to super
+        super(OMPv7, self).__init__(omp_manager)
 
-	# ----------------------------------------------------------------------
-	#
-	# PUBLIC METHODS
-	#
-	# ----------------------------------------------------------------------
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR ROLES
-	#
-	# ----------------------------------------------------------------------
-	def get_roles(self):
-		"""
-		Get roles in OpenVAS.
+    # ----------------------------------------------------------------------
+    #
+    # PUBLIC METHODS
+    #
+    # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR ROLES
+    #
+    # ----------------------------------------------------------------------
+    def get_roles(self):
+        """
+        Get roles in OpenVAS.
 
-		:return: a dict with the format: {role_name: role_ID}
-		"""
+        :return: a dict with the format: {role_name: role_ID}
+        """
 
-		request = """<get_roles/>"""
+        request = """<get_roles/>"""
 
-		elems = self._manager.make_xml_request(request, xml_result=True)
+        elems = self._manager.make_xml_request(request, xml_result=True)
 
-		m_return = {}
+        m_return = {}
 
-		for x in elems.findall("role"):
-			m_return[x.find("name").text.lower()] = x.get("id")
+        for x in elems.findall("role"):
+            m_return[x.find("name").text.lower()] = x.get("id")
 
-		return m_return
+        return m_return
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR USER
-	#
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR USER
+    #
+    # ----------------------------------------------------------------------
 
-	def create_user(self, name, password, role, allow_hosts='0', hosts=[], allow_ifaces='0', ifaces=[]):
-		"""
-		Creates a new user in OpenVAS.
+    def create_user(self, name, password, role, allow_hosts='0', hosts=[], allow_ifaces='0', ifaces=[]):
+        """
+        Creates a new user in OpenVAS.
 
-		:param name: The name of the user to be created.
-		:type name: str
+        :param name: The name of the user to be created.
+        :type name: str
 
-		:param password: The password for the user.
-		:type password: str
+        :param password: The password for the user.
+        :type password: str
 
-		:param role: A role of the user. If the role not exists in the roles dict then use a user role ID.
-		:type role: str
+        :param role: A role of the user. If the role not exists in the roles dict then use a user role ID.
+        :type role: str
 
-		:param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
-		:type allow_hosts: int
+        :param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
+        :type allow_hosts: int
 
-		:param hosts: User access rules: a textual list of hosts (host access).
-		:type hosts: list
+        :param hosts: User access rules: a textual list of hosts (host access).
+        :type hosts: list
 
-		:param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
-		:type allow_ifaces: int
+        :param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
+        :type allow_ifaces: int
 
-		:param ifaces: User access rules: a textual list of ifaces (interfaces access).
-		:type ifaces: list
+        :param ifaces: User access rules: a textual list of ifaces (interfaces access).
+        :type ifaces: list
 
-		:return: the ID of the created user (UUID).
-		:rtype: str
+        :return: the ID of the created user (UUID).
+        :rtype: str
 
-		"""
+        """
 
-		roles = self.get_roles()
-		role_id=roles.get(role, 'user')
+        roles = self.get_roles()
+        role_id=roles.get(role, 'user')
 
-		request = """<create_user>
-				<name>%s</name>
-				<password>%s</password>
-				<role id="%s"/>""" % (name, password, role_id)
+        request = """<create_user>
+                <name>%s</name>
+                <password>%s</password>
+                <role id="%s"/>""" % (name, password, role_id)
 
-		if hosts:
-			request += """<hosts allow="%s">%s</hosts>""" % (allow_hosts, str(",".join(hosts)))
+        if hosts:
+            request += """<hosts allow="%s">%s</hosts>""" % (allow_hosts, str(",".join(hosts)))
 
-		if ifaces:
-			request += """<ifaces allow="%s">%s</ifaces>""" % (allow_ifaces, str(",".join(ifaces)))
+        if ifaces:
+            request += """<ifaces allow="%s">%s</ifaces>""" % (allow_ifaces, str(",".join(ifaces)))
 
-		request += """</create_user>"""
+        request += """</create_user>"""
 
-		return self._manager.make_xml_request(request, xml_result=True).get("id")
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def delete_user(self, user_id='', name=''):
-		"""
-		Delete a user in OpenVAS.
+    def delete_user(self, user_id='', name=''):
+        """
+        Delete a user in OpenVAS.
 
-		:param user_id: The ID of the user to be deleted. Overrides name.
-		:type user_id: str
+        :param user_id: The ID of the user to be deleted. Overrides name.
+        :type user_id: str
 
-		:param name: The name of the user to be deleted.
-		:type name: str
+        :param name: The name of the user to be deleted.
+        :type name: str
 
-		"""
+        """
 
-		if user_id:
-			request = """<delete_user user_id="%s"/>"""%user_id
-		elif name:
-			request = """<delete_user name="%s"/>"""%name
+        if user_id:
+            request = """<delete_user user_id="%s"/>"""%user_id
+        elif name:
+            request = """<delete_user name="%s"/>"""%name
 
-		self._manager.make_xml_request(request, xml_result=True)
+        self._manager.make_xml_request(request, xml_result=True)
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def modify_user(self, user_id, new_name='', password='', role_id='', allow_hosts=None, hosts=[], allow_ifaces=None, ifaces=[]):
-		"""
-		Modify a user in OpenVAS.
+    def modify_user(self, user_id, new_name='', password='', role_id='', allow_hosts=None, hosts=[], allow_ifaces=None, ifaces=[]):
+        """
+        Modify a user in OpenVAS.
 
-		:param user_id: The ID of the user to be modified.
-		:type user_id: str
+        :param user_id: The ID of the user to be modified.
+        :type user_id: str
 
-		:param new_name: The new name for the user.
-		:type new_name: str
+        :param new_name: The new name for the user.
+        :type new_name: str
 
-		:param password: The password for the user.
-		:type password: str
+        :param password: The password for the user.
+        :type password: str
 
-		:param role_id: A role of the user.
-		:type role_id: str
+        :param role_id: A role of the user.
+        :type role_id: str
 
-		:param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
-		:type allow_hosts: int
+        :param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
+        :type allow_hosts: int
 
-		:param hosts: User access rules: a textual list of hosts (host access).
-		:type hosts: list of string
+        :param hosts: User access rules: a textual list of hosts (host access).
+        :type hosts: list of string
 
-		:param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
-		:type allow_ifaces: int
+        :param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
+        :type allow_ifaces: int
 
-		:param ifaces: User access rules: a textual list of ifaces (interfaces access).
-		:type ifaces: list of string
+        :param ifaces: User access rules: a textual list of ifaces (interfaces access).
+        :type ifaces: list of string
 
-		"""
+        """
 
-		request = """<modify_user user_id="%s">""" % user_id
+        request = """<modify_user user_id="%s">""" % user_id
 
-		if new_name:
-			request += """<new_name>%s</new_name>""" % new_name
+        if new_name:
+            request += """<new_name>%s</new_name>""" % new_name
 
-		if password:
-			request += """<password>%s</password>""" % password
+        if password:
+            request += """<password>%s</password>""" % password
 
-		if role_id:
-			request += """<role id="%s"/>""" % role_id
+        if role_id:
+            request += """<role id="%s"/>""" % role_id
 
-		###HOSTS###
-		if not hosts:
-			allow_hosts = '0'
-		if allow_hosts:
-			request += """<hosts allow="%s">""" % allow_hosts
-		else:
-			request += """<hosts>"""
+        ###HOSTS###
+        if not hosts:
+            allow_hosts = '0'
+        if allow_hosts:
+            request += """<hosts allow="%s">""" % allow_hosts
+        else:
+            request += """<hosts>"""
 
-		if hosts:
-			request += """%s""" % str(",".join(hosts))
-		request += """</hosts>"""
+        if hosts:
+            request += """%s""" % str(",".join(hosts))
+        request += """</hosts>"""
 
-		###IFACES###
-		if not hosts:
-			allow_ifaces = '0'
-		if allow_ifaces:
-			request += """<ifaces allow="%s">""" % allow_ifaces
-		else:
-			request += """<ifaces>"""
+        ###IFACES###
+        if not hosts:
+            allow_ifaces = '0'
+        if allow_ifaces:
+            request += """<ifaces allow="%s">""" % allow_ifaces
+        else:
+            request += """<ifaces>"""
 
-		if ifaces:
-			request += """%s""" % str(",".join(ifaces))
-		request += """</ifaces>"""
+        if ifaces:
+            request += """%s""" % str(",".join(ifaces))
+        request += """</ifaces>"""
 
-		request += """</modify_user>"""
+        request += """</modify_user>"""
 
-		self._manager.make_xml_request(request, xml_result=True)
+        self._manager.make_xml_request(request, xml_result=True)
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def get_users(self, user_id=None):
-		"""
-		Get a user in OpenVAS.
+    def get_users(self, user_id=None):
+        """
+        Get a user in OpenVAS.
 
-		:param user_id: ID of single user to get.
-		:type user_id: str
+        :param user_id: ID of single user to get.
+        :type user_id: str
 
-		:return: The user.
-		:rtype: str
+        :return: The user.
+        :rtype: str
 
-		"""
+        """
 
-		if not user_id:
-			elems = self._manager.make_xml_request("""<get_users/>""", xml_result=True)
-			m_return = {}
+        if not user_id:
+            elems = self._manager.make_xml_request("""<get_users/>""", xml_result=True)
+            m_return = {}
 
-			for x in elems.findall("user"):
-				m_return[x.find("name").text.lower()] = x.get("id")
+            for x in elems.findall("user"):
+                m_return[x.find("name").text.lower()] = x.get("id")
 
-			return m_return
-		else:
-			if not isinstance(user_id, str):
-				raise TypeError("Expected string, got %r instead" % type(user_id))
+            return m_return
+        else:
+            if not isinstance(user_id, str):
+                raise TypeError("Expected string, got %r instead" % type(user_id))
 
-			return self._manager.make_xml_request("""<get_users user_id='%s'/>""" % user_id, xml_result=True).find('.//user[@id="%s"]' % user_id)
+            return self._manager.make_xml_request("""<get_users user_id='%s'/>""" % user_id, xml_result=True).find('.//user[@id="%s"]' % user_id)
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR PORT_LISTS
-	#
-	# ----------------------------------------------------------------------
-	def create_port_list(self, name, port_range, comment=""):
-		"""
-		Creates a port list in OpenVAS.
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR PORT_LISTS
+    #
+    # ----------------------------------------------------------------------
+    def create_port_list(self, name, port_range, comment=""):
+        """
+        Creates a port list in OpenVAS.
 
-		:param name: name to the port list
-		:type name: str
+        :param name: name to the port list
+        :type name: str
 
-		:param port_range: Port ranges. Should be a string of the form "T:22-80,U:53,88,1337"
-		:type port_range: str
+        :param port_range: Port ranges. Should be a string of the form "T:22-80,U:53,88,1337"
+        :type port_range: str
 
-		:param comment: comment to add to the port list
-		:type comment: str
+        :param comment: comment to add to the port list
+        :type comment: str
 
-		:return: the ID of the created target.
-		:rtype: str
+        :return: the ID of the created target.
+        :rtype: str
 
-		:raises: ClientError, ServerError TODO
-		"""
-		request = """<create_port_list>
-				<name>%s</name>
-				<port_range>%s</port_range>
-				<comment>%s</comment>
-		</create_port_list>""" % (name, port_range, comment)
+        :raises: ClientError, ServerError TODO
+        """
+        request = """<create_port_list>
+                <name>%s</name>
+                <port_range>%s</port_range>
+                <comment>%s</comment>
+        </create_port_list>""" % (name, port_range, comment)
 
-		return self._manager.make_xml_request(request, xml_result=True).get("id")
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def delete_port_list(self, port_list_id):
-		"""
-		Delete a user in OpenVAS.
+    def delete_port_list(self, port_list_id):
+        """
+        Delete a user in OpenVAS.
 
-		:param port_list_id: The ID of the port list to be deleted
-		:type port_list_id: str
+        :param port_list_id: The ID of the port list to be deleted
+        :type port_list_id: str
 
-		:param name: The name of the user to be deleted.
-		:type name: str
+        :param name: The name of the user to be deleted.
+        :type name: str
 
-		"""
+        """
 
-		request = """<delete_port_list port_list_id="%s"/>"""%port_list_id
+        request = """<delete_port_list port_list_id="%s"/>"""%port_list_id
 
-		self._manager.make_xml_request(request, xml_result=True)
+        self._manager.make_xml_request(request, xml_result=True)
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def get_port_lists(self, port_list_id=None):
-		"""
-		Get a user in OpenVAS.
+    def get_port_lists(self, port_list_id=None):
+        """
+        Get a user in OpenVAS.
 
-		:param port_list_id: ID of single port list to get.
-		:type port_list_id: str
+        :param port_list_id: ID of single port list to get.
+        :type port_list_id: str
 
-		:return: port list dict
-		:rtype: str
+        :return: port list dict
+        :rtype: str
 
-		"""
-		m_return = {}
+        """
+        m_return = {}
 
-		if not port_list_id:
-			elems = self._manager.make_xml_request("""<get_port_lists details='1'/>""", xml_result=True)
+        if not port_list_id:
+            elems = self._manager.make_xml_request("""<get_port_lists details='1'/>""", xml_result=True)
 
-			for x in elems.findall("port_list"):
-				port_ranges = []
-				for r in x.findall("port_ranges/port_range"):
-					type = r.find('type').text
-					start = r.find('start').text
-					end = r.find('end').text
-					port_ranges.append("%s:%s-%s" % (type, start, end))
+            for x in elems.findall("port_list"):
+                port_ranges = []
+                for r in x.findall("port_ranges/port_range"):
+                    type = r.find('type').text
+                    start = r.find('start').text
+                    end = r.find('end').text
+                    port_ranges.append("%s:%s-%s" % (type, start, end))
 
-				m_return[x.find("name").text.lower()] = {'id' : x.get("id"), 'port_ranges': port_ranges}
-		else:
-			if not isinstance(port_list_id, str):
-				raise TypeError("Expected string, got %r instead" % type(port_list_id))
+                m_return[x.find("name").text.lower()] = {'id' : x.get("id"), 'port_ranges': port_ranges}
+        else:
+            if not isinstance(port_list_id, str):
+                raise TypeError("Expected string, got %r instead" % type(port_list_id))
 
-			port_list = self._manager.make_xml_request("""<get_port_lists port_list_id='%s' details='1'/>""" % port_list_id, xml_result=True).find('.//port_list[@id="%s"]' % port_list_id)
-			port_ranges = []
-			for r in port_list.findall("port_ranges/port_range"):
-				type = r.find('type').text
-				start = r.find('start').text
-				end = r.find('end').text
-				port_ranges.append("%s:%s-%s" % (type, start, end))
+            port_list = self._manager.make_xml_request("""<get_port_lists port_list_id='%s' details='1'/>""" % port_list_id, xml_result=True).find('.//port_list[@id="%s"]' % port_list_id)
+            port_ranges = []
+            for r in port_list.findall("port_ranges/port_range"):
+                type = r.find('type').text
+                start = r.find('start').text
+                end = r.find('end').text
+                port_ranges.append("%s:%s-%s" % (type, start, end))
 
-			m_return[port_list.find("name").text.lower()] = {'id' : port_list.get("id"), 'port_ranges': port_ranges}
+            m_return[port_list.find("name").text.lower()] = {'id' : port_list.get("id"), 'port_ranges': port_ranges}
 
-		return m_return
-	# ----------------------------------------------------------------------
+        return m_return
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR OTHER
-	#
-	# ----------------------------------------------------------------------
-	def create_schedule(self, name, hour, minute, month, day, year, period=None, duration=None,timezone="UTC"):
-		"""
-		Creates a schedule in the OpenVAS server.
+    # ----------------------------------------------------------------------
 
-		:param name: name to the schedule
-		:type name: str
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR CREDENTIALS
+    #
+    # ----------------------------------------------------------------------
 
-		:param hour: hour at which to start the schedule, 0 to 23
-		:type hour: str
+    def create_credential(self, name, login, comment="", copy="", allow_insecure=False, password="", key_phrase="",
+                          key_private=""):
+        """
+        Creates a new credential in OpenVAS.
 
-		:param minute: minute at which to start the schedule, 0 to 59
-		:type minute: str
+        :param name: The name of the user to be created.
+        :type name: str
 
-		:param month: month at which to start the schedule, 1-12
-		:type month: str
+        :param password: The password for the user.
+        :type password: str
 
-		:param year: year at which to start the schedule
-		:type year: str
+        :param role: A role of the user. If the role not exists in the roles dict then use a user role ID.
+        :type role: str
 
-		:param timezone: The timezone the schedule will follow. The format of a timezone is the same as that of the TZ environment variable on GNU/Linux systems
-		:type timezone: str
+        :param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
+        :type allow_hosts: int
 
-		:param period:How often the Manager will repeat the scheduled task. Assumed unit of days
-		:type period: str
+        :param hosts: User access rules: a textual list of hosts (host access).
+        :type hosts: list
 
-		:param duration: How long the Manager will run the scheduled task for. Assumed unit of hours
-		:type period: str
+        :param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
+        :type allow_ifaces: int
 
-		:return: the ID of the created schedule.
-		:rtype: str
+        :param ifaces: User access rules: a textual list of ifaces (interfaces access).
+        :type ifaces: list
 
-		:raises: ClientError, ServerError
-		"""
-		request = """<create_schedule>
-				<name>%s</name>
-				<first_time>
-				<hour>%s</hour>
-				<minute>%s</minute>
-				<month>%s</month>
-				<day_of_month>%s</day_of_month>
-				<year>%s</year>
-				</first_time>
-				<timezone>%s</timezone>
-				<comment>%s</comment>""" % (name, hour, minute, month, day, year, timezone, "")
-		if duration:
-			request += """<duration>%s<unit>hour</unit></duration>""" % (duration)
-		else:
-			request += """<duration>0<unit>hour</unit></duration>"""
-		if period:
-			request += """<period>
-				%s
-				<unit>day</unit>
-				</period>""" % (period)
-		else:
-			request += """<period>0<unit>day</unit></period>"""
-		request += """
-	</create_schedule>"""
+        :return: the ID of the created user (UUID).
+        :rtype: str
 
-		return self._manager.make_xml_request(request, xml_result=True).get("id")
+        """
 
-	# ----------------------------------------------------------------------
+        request = """<create_credential>
+                <name>%s</name>
+                <comment>%s</comment>
+                <allow_insecure>%s</allow_insecure>""" % (name, comment, allow_insecure)
 
-	def get_schedules(self, schedule_id=None, tasks="1"):
-		"""
-		Get schedules in the server.
+        if copy:
+            request += """<copy>%s</copy>""" % copy
+            request += """</create_credential>"""
+            return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-		If schedule_id is provided, only get the schedule associated to this id.
+        request += """<login>%s</login>""" % login
 
-		:param schedule_id: schedule id to get
-		:type schedule_id: str
+        if password:
+            request += """<password>%s</password>""" % password
 
-		:return: `ElementTree`
+        if key_private:
+            request += """<key>"""
+            if key_phrase:
+                request += """<phrase>%s</phrase>""" % key_phrase
+            request += """<private>%s</private>
+                    </key>""" % key_private
 
-		:raises: ClientError, ServerError
-		"""
-		if schedule_id:
-			return self._manager.make_xml_request('<get_schedules schedule_id="%s" tasks="%s"/>' % (schedule_id, tasks), xml_result=True)
-		else:
-			return self._manager.make_xml_request('<get_schedules tasks="%s"/>' % tasks, xml_result=True)
+        request += """</create_credential>"""
 
-	# ----------------------------------------------------------------------
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-	def get_tasks_schedules(self, schedule_id):
-		"""
-		Get tasks that have schedule in the server.
+    # ----------------------------------------------------------------------
 
-		:return: list of dicts [{'task_id':task_ID, 'schedule_id':schedule_ID}]
+    def delete_credential(self, credential_id):
+        """
+        Delete a credential in OpenVAS.
 
-		:raises: ClientError, ServerError
-		"""
+        :param user_id: The ID of the user to be deleted. Overrides name.
+        :type user_id: str
 
-		results = []
+        """
 
-		schedules = self.get_schedules(schedule_id).findall('schedule')
+        if credential_id:
+            request = """<delete_credential credential_id="%s"/>""" % credential_id
 
-		for s in schedules:
-			schedule_id = s.get('id')
-			tasks = s.findall('tasks/task')
+        return self._manager.make_xml_request(request, xml_result=True).get("status")
 
-			for task in tasks:
-				results.append({'task_id':task.get('id'), 'schedule_id':schedule_id})
+    # ----------------------------------------------------------------------
 
-		return results
-	# ----------------------------------------------------------------------
+    def modify_credential(self, credential_id, name="", login="", comment="", allow_insecure=False, password="", key_phrase="",
+                          key_private=""):
+        """
 
-	def delete_schedule(self, schedule_id, ultimate=False):
-		"""
-		Delete a schedule.
+        Modify Credentials
 
-		:param schedule_id: schedule_id
-		:type schedule_id: str
+        :param id:
+        :param name:
+        :param login:
+        :param comment:
+        :param allow_insecure:
+        :param password:
+        :param key_phrase:
+        :param key_private:
+        :return:
+        """
 
-		:param ultimate: remove or not from trashcan
-		:type ultimate: bool
+        request = """<modify_credential credential_id="%s">""" % credential_id
 
-		:raises: AuditNotFoundError, ServerError
-		"""
+        if name:
+            """<name>%s</name>""" % name
+        if comment:
+                """<comment>%s</comment>""" % comment
+        if allow_insecure:
+                """<allow_insecure>%s</allow_insecure>""" % allow_insecure
+        if login:
+            request += """<login>%s</login>""" % login
 
-		request = """<delete_schedule schedule_id="%s" ultimate="%s" />""" % (schedule_id, int(ultimate))
+        if password:
+            request += """<password>%s</password>""" % password
 
-		self._manager.make_xml_request(request, xml_result=True)
+        if key_private:
+            request += """<key>"""
+            if key_phrase:
+                request += """<phrase>%s</phrase>""" % key_phrase
+            request += """<private>%s</private>
+                    </key>""" % key_private
 
-	# ----------------------------------------------------------------------
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR CONFIG
-	#
-	# ----------------------------------------------------------------------
-	def get_configs(self, config_id=None):
-		"""
-		Get information about the configs in the server.
+        request += """</modify_credential>"""
 
-		If name param is provided, only get the config associated to this name.
+        return self._manager.make_xml_request(request, xml_result=True)
 
-		:param config_id: config id to get
-		:type config_id: str
 
-		:return: `ElementTree`
 
-		:raises: ClientError, ServerError
-		"""
-		# Recover all config from OpenVAS
-		if config_id:
-			return self._manager.make_xml_request('<get_configs config_id="%s"/>' % config_id, xml_result=True)
-		else:
-			return self._manager.make_xml_request("<get_configs />", xml_result=True)
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR OTHER
+    #
+    # ----------------------------------------------------------------------
+    def create_schedule(self, name, hour, minute, month, day, year, period=None, duration=None,timezone="UTC"):
+        """
+        Creates a schedule in the OpenVAS server.
 
-	# ----------------------------------------------------------------------
-	def get_configs_ids(self, name=None):
-		"""
-		Get information about the configured profiles (configs)in the server.
+        :param name: name to the schedule
+        :type name: str
 
-		If name param is provided, only get the ID associated to this name.
+        :param hour: hour at which to start the schedule, 0 to 23
+        :type hour: str
 
-		:param name: config name to get
-		:type name: str
+        :param minute: minute at which to start the schedule, 0 to 59
+        :type minute: str
 
-		:return: a dict with the format: {config_name: config_ID}
+        :param month: month at which to start the schedule, 1-12
+        :type month: str
 
-		:raises: ClientError, ServerError
-		"""
-		m_return = {}
+        :param year: year at which to start the schedule
+        :type year: str
 
-		for x in self.get_configs().findall("config"):
-			m_return[x.find("name").text] = x.get("id")
+        :param timezone: The timezone the schedule will follow. The format of a timezone is the same as that of the TZ environment variable on GNU/Linux systems
+        :type timezone: str
 
-		if name:
-			return {name: m_return[name]}
-		else:
-			return m_return
+        :param period:How often the Manager will repeat the scheduled task. Assumed unit of days
+        :type period: str
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR TARGET
-	#
-	# ----------------------------------------------------------------------
+        :param duration: How long the Manager will run the scheduled task for. Assumed unit of hours
+        :type period: str
 
-	def create_target(self, name, hosts, comment="", port_list=""):
-		"""
-		Creates a target in OpenVAS.
+        :return: the ID of the created schedule.
+        :rtype: str
 
-		:param name: name to the target
-		:type name: str
+        :raises: ClientError, ServerError
+        """
+        request = """<create_schedule>
+                <name>%s</name>
+                <first_time>
+                <hour>%s</hour>
+                <minute>%s</minute>
+                <month>%s</month>
+                <day_of_month>%s</day_of_month>
+                <year>%s</year>
+                </first_time>
+                <timezone>%s</timezone>
+                <comment>%s</comment>""" % (name, hour, minute, month, day, year, timezone, "")
+        if duration:
+            request += """<duration>%s<unit>hour</unit></duration>""" % (duration)
+        else:
+            request += """<duration>0<unit>hour</unit></duration>"""
+        if period:
+            request += """<period>
+                %s
+                <unit>day</unit>
+                </period>""" % (period)
+        else:
+            request += """<period>0<unit>day</unit></period>"""
+        request += """
+    </create_schedule>"""
 
-		:param hosts: target list. Can be only one target or a list of targets
-		:type hosts: str | list(str)
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-		:param comment: comment to add to task
-		:type comment: str
+    # ----------------------------------------------------------------------
 
-		:param port_list: Port List ID to use for the target
-		:type port_list: str
+    def get_schedules(self, schedule_id=None, tasks="1"):
+        """
+        Get schedules in the server.
 
-		:return: the ID of the created target.
-		:rtype: str
+        If schedule_id is provided, only get the schedule associated to this id.
 
-		:raises: ClientError, ServerError
-		"""
+        :param schedule_id: schedule id to get
+        :type schedule_id: str
 
-		if not port_list:
-			port_list = self.get_port_lists().get("openvas default").get('id')
+        :return: `ElementTree`
 
-		from collections import Iterable
-		if isinstance(hosts, str):
-			m_targets = hosts
-		elif isinstance(hosts, Iterable):
-			m_targets = str(",".join(hosts))
+        :raises: ClientError, ServerError
+        """
+        if schedule_id:
+            return self._manager.make_xml_request('<get_schedules schedule_id="%s" tasks="%s"/>' % (schedule_id, tasks), xml_result=True)
+        else:
+            return self._manager.make_xml_request('<get_schedules tasks="%s"/>' % tasks, xml_result=True)
 
-		request = """<create_target>
-				<name>%s</name>
-				<hosts>%s</hosts>""" % (name, m_targets)
+    # ----------------------------------------------------------------------
 
-		if port_list:
-			request += """<port_list id="%s"/>"""%port_list
+    def get_tasks_schedules(self, schedule_id):
+        """
+        Get tasks that have schedule in the server.
 
-		if comment:
-			request += """<comment>%s</comment>"""%comment
+        :return: list of dicts [{'task_id':task_ID, 'schedule_id':schedule_ID}]
 
-		request += """</create_target>"""
+        :raises: ClientError, ServerError
+        """
 
-		return self._manager.make_xml_request(request, xml_result=True).get("id")
+        results = []
 
-	# ----------------------------------------------------------------------
+        schedules = self.get_schedules(schedule_id).findall('schedule')
 
-	def delete_target(self, target_id):
-		"""
-		Delete a target in OpenVAS server.
+        for s in schedules:
+            schedule_id = s.get('id')
+            tasks = s.findall('tasks/task')
 
-		:param target_id: target id
-		:type target_id: str
+            for task in tasks:
+                results.append({'task_id':task.get('id'), 'schedule_id':schedule_id})
 
-		:raises: ClientError, ServerError
-		"""
+        return results
+    # ----------------------------------------------------------------------
 
-		request = """<delete_target target_id="%s" />""" % target_id
+    def delete_schedule(self, schedule_id, ultimate=False):
+        """
+        Delete a schedule.
 
-		self._manager.make_xml_request(request, xml_result=True)
+        :param schedule_id: schedule_id
+        :type schedule_id: str
 
-	# ----------------------------------------------------------------------
+        :param ultimate: remove or not from trashcan
+        :type ultimate: bool
 
-	def get_targets(self, target_id=None):
-		"""
-		Get information about the targets in the server.
+        :raises: AuditNotFoundError, ServerError
+        """
 
-		If name param is provided, only get the target associated to this name.
+        request = """<delete_schedule schedule_id="%s" ultimate="%s" />""" % (schedule_id, int(ultimate))
 
-		:param target_id: target id to get
-		:type target_id: str
+        self._manager.make_xml_request(request, xml_result=True)
 
-		:return: `ElementTree` | None
+    # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR CONFIG
+    #
+    # ----------------------------------------------------------------------
+    def get_configs(self, config_id=None):
+        """
+        Get information about the configs in the server.
 
-		:raises: ClientError, ServerError
-		"""
-		m_return = {}
-		# Recover all config from OpenVAS
-		if target_id:
-			targets = self._manager.make_xml_request('<get_targets id="%s"/>' % target_id,
-												  xml_result=True).find('.//target[@id="%s"]' % target_id)
-		else:
-			targets = self._manager.make_xml_request("<get_targets />", xml_result=True)
+        If name param is provided, only get the config associated to this name.
 
-		for x in targets.findall("target"):
-			m_return[x.find("name").text] = x.get("id")
+        :param config_id: config id to get
+        :type config_id: str
 
-		return m_return
+        :return: `ElementTree`
 
-	# ----------------------------------------------------------------------
+        :raises: ClientError, ServerError
+        """
+        # Recover all config from OpenVAS
+        if config_id:
+            return self._manager.make_xml_request('<get_configs config_id="%s"/>' % config_id, xml_result=True)
+        else:
+            return self._manager.make_xml_request("<get_configs />", xml_result=True)
 
-	def get_targets_ids(self, name=None):
-		"""
-		Get IDs of targets of the server.
+    # ----------------------------------------------------------------------
+    def get_configs_ids(self, name=None):
+        """
+        Get information about the configured profiles (configs)in the server.
 
-		If name param is provided, only get the ID associated to this name.
+        If name param is provided, only get the ID associated to this name.
 
-		:param name: target name to get
-		:type name: str
+        :param name: config name to get
+        :type name: str
 
-		:return: a dict with the format: {target_name: target_ID}
+        :return: a dict with the format: {config_name: config_ID}
 
-		:raises: ClientError, ServerError
-		"""
+        :raises: ClientError, ServerError
+        """
+        m_return = {}
 
-		m_return = self.get_targets()
+        for x in self.get_configs().findall("config"):
+            m_return[x.find("name").text] = x.get("id")
 
-		if name:
-			return m_return.get(name)
-		else:
-			return m_return
+        if name:
+            return {name: m_return[name]}
+        else:
+            return m_return
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR TASK
-	#
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR TARGET
+    #
+    # ----------------------------------------------------------------------
 
-	def create_task(self, name, target, config=None, schedule=None, comment="", max_checks=None, max_hosts=None):
-		"""
-		Creates a task in OpenVAS.
+    def create_target(self, name, hosts, comment="", port_list=""):
+        """
+        Creates a target in OpenVAS.
 
-		:param name: name to the task
-		:type name: str
+        :param name: name to the target
+        :type name: str
 
-		:param target: target to scan
-		:type target: str
+        :param hosts: target list. Can be only one target or a list of targets
+        :type hosts: str | list(str)
 
-		:param config: config (profile) name
-		:type config: str
+        :param comment: comment to add to task
+        :type comment: str
 
-		:param schedule: schedule ID to use.
-		:type schedule: str
+        :param port_list: Port List ID to use for the target
+        :type port_list: str
 
-		:param comment: comment to add to task
-		:type comment: str
+        :return: the ID of the created target.
+        :rtype: str
 
-		:param max_hosts: Maximum concurrently scanned hosts.
-		:type max_hosts: int
+        :raises: ClientError, ServerError
+        """
 
-		:param max_checks: Maximum concurrently executed NVTs per host.
-		:type max_checks: int
+        if not port_list:
+            port_list = self.get_port_lists().get("openvas default").get('id')
 
-		:return: the ID of the task created.
-		:rtype: str
+        from collections import Iterable
+        if isinstance(hosts, str):
+            m_targets = hosts
+        elif isinstance(hosts, Iterable):
+            m_targets = str(",".join(hosts))
 
-		:raises: ClientError, ServerError
-		"""
+        request = """<create_target>
+                <name>%s</name>
+                <hosts>%s</hosts>""" % (name, m_targets)
 
-		if not config:
-			config = "Full and fast"
+        if port_list:
+            request += """<port_list id="%s"/>"""%port_list
 
-		request = """<create_task>
-			<name>%s</name>
-			<comment>%s</comment>
-			<config id="%s"/>
-			<target id="%s"/>""" % (name, comment, config, target)
+        if comment:
+            request += """<comment>%s</comment>"""%comment
 
-		if schedule:
-			request += """<schedule>%s</schedule>""" % (schedule)
+        request += """</create_target>"""
 
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-		if max_checks or max_hosts:
-			request += """<preferences>"""
+    # ----------------------------------------------------------------------
 
-			if max_checks:
-				request += """<preference>
-								<scanner_name>max_checks</scanner_name>
-								<value>%s</value>
-							</preference>""" % max_checks
-			if max_hosts:
-				request += """<preference>
-								<scanner_name>max_hosts</scanner_name>
-								<value>%s</value>
-							</preference>""" % max_hosts
+    def delete_target(self, target_id):
+        """
+        Delete a target in OpenVAS server.
 
-			request += """</preferences>"""
+        :param target_id: target id
+        :type target_id: str
 
-		request += """</create_task>"""
+        :raises: ClientError, ServerError
+        """
 
-		return self._manager.make_xml_request(request, xml_result=True).get("id")
+        request = """<delete_target target_id="%s" />""" % target_id
 
-	# ----------------------------------------------------------------------
+        self._manager.make_xml_request(request, xml_result=True)
 
-	def start_task(self, task_id):
-		"""
-		Start a task.
+    # ----------------------------------------------------------------------
 
-		:param task_id: ID of task to start.
-		:type task_id: str
+    def get_targets(self, target_id=None):
+        """
+        Get information about the targets in the server.
 
-		:raises: ClientError, ServerError
-		"""
-		if not isinstance(task_id, str):
-			raise TypeError("Expected string, got %r instead" % type(task_id))
+        If name param is provided, only get the target associated to this name.
 
-		m_query = '<start_task task_id="%s"/>' % task_id
+        :param target_id: target id to get
+        :type target_id: str
 
-		m_response = self._manager.make_xml_request(m_query, xml_result=True)
+        :return: `ElementTree` | None
 
-		return m_response
+        :raises: ClientError, ServerError
+        """
+        m_return = {}
+        # Recover all config from OpenVAS
+        if target_id:
+            targets = self._manager.make_xml_request('<get_targets id="%s"/>' % target_id,
+                                                  xml_result=True).find('.//target[@id="%s"]' % target_id)
+        else:
+            targets = self._manager.make_xml_request("<get_targets />", xml_result=True)
 
-	# ----------------------------------------------------------------------
+        for x in targets.findall("target"):
+            m_return[x.find("name").text] = x.get("id")
 
-	def delete_task(self, task_id, ultimate=False):
-		"""
-		Delete a task in OpenVAS server.
+        return m_return
 
-		:param task_id: task id
-		:type task_id: str
+    # ----------------------------------------------------------------------
 
-		:param ultimate: remove or not from trashcan
-		:type ultimate: bool
+    def get_targets_ids(self, name=None):
+        """
+        Get IDs of targets of the server.
 
-		:raises: AuditNotFoundError, ServerError
-		"""
-		request = """<delete_task task_id="%s" ultimate="%s" />""" % (task_id, int(ultimate))
+        If name param is provided, only get the ID associated to this name.
 
-		try:
-			self._manager.make_xml_request(request, xml_result=True)
-		except ClientError:
-			raise AuditNotFoundError()
+        :param name: target name to get
+        :type name: str
 
-	# ----------------------------------------------------------------------
+        :return: a dict with the format: {target_name: target_ID}
 
-	def stop_task(self, task_id):
-		"""
-		Stops a task in OpenVAS server.
+        :raises: ClientError, ServerError
+        """
 
-		:param task_id: task id
-		:type task_id: str
+        m_return = self.get_targets()
 
-		:raises: ServerError, AuditNotFoundError
-		"""
+        if name:
+            return m_return.get(name)
+        else:
+            return m_return
 
-		request = """<stop_task task_id="%s" />""" % task_id
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR TASK
+    #
+    # ----------------------------------------------------------------------
 
-		self._manager.make_xml_request(request, xml_result=True)
+    def create_task(self, name, target, config=None, schedule=None, comment="", max_checks=None, max_hosts=None):
+        """
+        Creates a task in OpenVAS.
 
-	# ----------------------------------------------------------------------
+        :param name: name to the task
+        :type name: str
 
-	def _get_tasks(self, task_id=None):
-		"""
-		Get information about the configured profiles in the server.
+        :param target: target to scan
+        :type target: str
 
-		If name param is provided, only get the task associated to this name.
+        :param config: config (profile) name
+        :type config: str
 
-		:param task_id: task id to get
-		:type task_id: str
+        :param schedule: schedule ID to use.
+        :type schedule: str
 
-		:return: `ElementTree` | None
+        :param comment: comment to add to task
+        :type comment: str
 
-		:raises: ClientError, ServerError
-		"""
-		# Recover all task from OpenVAS
+        :param max_hosts: Maximum concurrently scanned hosts.
+        :type max_hosts: int
 
-		if task_id:
-			return self._manager.make_xml_request('<get_tasks id="%s"/>' % task_id,
-												  xml_result=True).find('.//task[@id="%s"]' % task_id)
-		else:
-			return self._manager.make_xml_request("<get_tasks />", xml_result=True)
+        :param max_checks: Maximum concurrently executed NVTs per host.
+        :type max_checks: int
 
+        :return: the ID of the task created.
+        :rtype: str
 
-	def get_tasks(self, task_id=None):
-		"""
-		Get information about the configured profiles in the server.
+        :raises: ClientError, ServerError
+        """
 
-		If name param is provided, only get the task associated to this name.
+        if not config:
+            config = "Full and fast"
 
-		:param task_id: task id to get
-		:type task_id: str
+        request = """<create_task>
+            <name>%s</name>
+            <comment>%s</comment>
+            <config id="%s"/>
+            <target id="%s"/>""" % (name, comment, config, target)
 
-		:return: `ElementTree` | None
+        if schedule:
+            request += """<schedule>%s</schedule>""" % (schedule)
 
-		:raises: ClientError, ServerError
-		"""
-		# Recover all task from OpenVAS
 
-		m_return = {}
+        if max_checks or max_hosts:
+            request += """<preferences>"""
 
-		if task_id:
-			tasks = self._get_tasks(task_id).find('.//task[@id="%s"]' % task_id)
-		else:
-			tasks = self._get_tasks()
+            if max_checks:
+                request += """<preference>
+                                <scanner_name>max_checks</scanner_name>
+                                <value>%s</value>
+                            </preference>""" % max_checks
+            if max_hosts:
+                request += """<preference>
+                                <scanner_name>max_hosts</scanner_name>
+                                <value>%s</value>
+                            </preference>""" % max_hosts
 
-		for x in tasks.findall("task"):
-			m_return[x.find("name").text] = x.get("id")
+            request += """</preferences>"""
 
-		return m_return
+        request += """</create_task>"""
 
-	# ----------------------------------------------------------------------
+        return self._manager.make_xml_request(request, xml_result=True).get("id")
 
-	def get_tasks_ids(self, name=None):
-		"""
-		Get IDs of tasks of the server.
+    # ----------------------------------------------------------------------
 
-		If name param is provided, only get the ID associated to this name.
+    def start_task(self, task_id):
+        """
+        Start a task.
 
-		:param name: task name to get
-		:type name: str
+        :param task_id: ID of task to start.
+        :type task_id: str
 
-		:return: a dict with the format: {task_name: task_ID}
+        :raises: ClientError, ServerError
+        """
+        if not isinstance(task_id, str):
+            raise TypeError("Expected string, got %r instead" % type(task_id))
 
-		:raises: ClientError, ServerError
-		"""
-		m_return = self.get_tasks()
+        m_query = '<start_task task_id="%s"/>' % task_id
 
-		if name:
-			return m_return.get(name)
-		else:
-			return m_return
+        m_response = self._manager.make_xml_request(m_query, xml_result=True)
 
-	# ----------------------------------------------------------------------
+        return m_response
 
-	def get_tasks_progress(self, task_id):
-		"""
-		Get the progress of the task.
+    # ----------------------------------------------------------------------
 
-		:param task_id: ID of the task
-		:type task_id: str
+    def delete_task(self, task_id, ultimate=False):
+        """
+        Delete a task in OpenVAS server.
 
-		:return: a float number between 0-100
-		:rtype: float
+        :param task_id: task id
+        :type task_id: str
 
-		:raises: ClientError, ServerError
-		"""
-		if not isinstance(task_id, str):
-			raise TypeError("Expected string, got %r instead" % type(task_id))
+        :param ultimate: remove or not from trashcan
+        :type ultimate: bool
 
-		m_sum_progress = 0.0  # Partial progress
-		m_progress_len = 0.0  # All of tasks
+        :raises: AuditNotFoundError, ServerError
+        """
+        request = """<delete_task task_id="%s" ultimate="%s" />""" % (task_id, int(ultimate))
 
-		# Get status with xpath
-		tasks = self._get_tasks()
-		status = tasks.find('.//task[@id="%s"]/status' % task_id)
+        try:
+            self._manager.make_xml_request(request, xml_result=True)
+        except ClientError:
+            raise AuditNotFoundError()
 
-		if status is None:
-			raise ServerError("Task not found")
+    # ----------------------------------------------------------------------
 
-		if status.text in ("Running", "Pause Requested", "Paused"):
-			h = tasks.findall('.//task[@id="%s"]/progress/host_progress/host' % task_id)
+    def stop_task(self, task_id):
+        """
+        Stops a task in OpenVAS server.
 
-			if h is not None:
-				m_progress_len += float(len(h))
-				m_sum_progress += sum([float(x.tail) for x in h])
+        :param task_id: task id
+        :type task_id: str
 
-		elif status.text in ("Delete Requested", "Done", "Stop Requested", "Stopped", "Internal Error"):
-			return 100.0  # Task finished
+        :raises: ServerError, AuditNotFoundError
+        """
 
-		try:
-			return m_sum_progress / m_progress_len
-		except ZeroDivisionError:
-			return 0.0
+        request = """<stop_task task_id="%s" />""" % task_id
 
-	# ----------------------------------------------------------------------
+        self._manager.make_xml_request(request, xml_result=True)
 
-	def get_tasks_detail(self, task_id):
-		"""
-		Get the xml of the details associated to the task ID.
+    # ----------------------------------------------------------------------
 
-		:param task_id: ID of task.
-		:type task_id: str
+    def _get_tasks(self, task_id=None):
+        """
+        Get information about the configured profiles in the server.
 
-		:return: xml object
-		:rtype: `ElementTree`
+        If name param is provided, only get the task associated to this name.
 
-		:raises: ClientError, ServerError
-		"""
+        :param task_id: task id to get
+        :type task_id: str
 
-		if not isinstance(task_id, str):
-			raise TypeError("Expected string, got %r instead" % type(task_id))
+        :return: `ElementTree` | None
 
-		try:
-			m_response = self._manager.make_xml_request('<get_tasks task_id="%s" details="1"/>' % task_id,
-														xml_result=True)
-		except ServerError as e:
-			raise VulnscanServerError("Can't get the detail for the task %s. Error: %s" % (task_id, e.message))
+        :raises: ClientError, ServerError
+        """
+        # Recover all task from OpenVAS
 
-		return m_response
+        if task_id:
+            return self._manager.make_xml_request('<get_tasks id="%s"/>' % task_id,
+                                                  xml_result=True).find('.//task[@id="%s"]' % task_id)
+        else:
+            return self._manager.make_xml_request("<get_tasks />", xml_result=True)
 
-	# ----------------------------------------------------------------------
 
-	def get_task_status(self, task_id):
-		"""
-		Get task status
+    def get_tasks(self, task_id=None):
+        """
+        Get information about the configured profiles in the server.
 
-		:param task_id: ID of task to check.
-		:type task_id: str
+        If name param is provided, only get the task associated to this name.
 
-		:return: status of a task
-		:rtype: str
+        :param task_id: task id to get
+        :type task_id: str
 
-		:raises: ClientError, ServerError
-		"""
-		if not isinstance(task_id, str):
-			raise TypeError("Expected string, got %r instead" % type(task_id))
+        :return: `ElementTree` | None
 
-		status = self._get_tasks().find('.//task[@id="%s"]/status' % task_id)
+        :raises: ClientError, ServerError
+        """
+        # Recover all task from OpenVAS
 
-		if status is None:
-			raise ServerError("Task not found")
+        m_return = {}
 
-		return status.text
+        if task_id:
+            tasks = self._get_tasks(task_id).find('.//task[@id="%s"]' % task_id)
+        else:
+            tasks = self._get_tasks()
 
-	# ----------------------------------------------------------------------
+        for x in tasks.findall("task"):
+            m_return[x.find("name").text] = x.get("id")
 
-	def is_task_running(self, task_id):
-		"""
-		Return true if task is running
+        return m_return
 
-		:param task_id: ID of task to check.
-		:type task_id: str
+    # ----------------------------------------------------------------------
 
-		:return: bool
-		:rtype: bool
+    def get_tasks_ids(self, name=None):
+        """
+        Get IDs of tasks of the server.
 
-		:raises: ClientError, ServerError
-		"""
+        If name param is provided, only get the ID associated to this name.
 
-		if not isinstance(task_id, str):
-			raise TypeError("Expected string, got %r instead" % type(task_id))
+        :param name: task name to get
+        :type name: str
 
-		status = self.get_task_status(task_id)
+        :return: a dict with the format: {task_name: task_ID}
 
-		if status is None:
-			raise ServerError("Task not found")
+        :raises: ClientError, ServerError
+        """
+        m_return = self.get_tasks()
 
-		return status in ("Running", "Requested")
+        if name:
+            return m_return.get(name)
+        else:
+            return m_return
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def get_tasks_ids_by_status(self, status="Done"):
-		"""
-		Get IDs of tasks of the server depending of their status.
+    def get_tasks_progress(self, task_id):
+        """
+        Get the progress of the task.
 
-		Allowed status are: "Done", "Paused", "Running", "Stopped".
+        :param task_id: ID of the task
+        :type task_id: str
 
-		If name param is provided, only get the ID associated to this name.
+        :return: a float number between 0-100
+        :rtype: float
 
-		:param status: get task with this status
-		:type status: str - ("Done" |"Paused" | "Running" | "Stopped".)
+        :raises: ClientError, ServerError
+        """
+        if not isinstance(task_id, str):
+            raise TypeError("Expected string, got %r instead" % type(task_id))
 
-		:return: a dict with the format: {task_name: task_ID}
+        m_sum_progress = 0.0  # Partial progress
+        m_progress_len = 0.0  # All of tasks
 
-		:raises: ClientError, ServerError
-		"""
-		if status not in ("Done", "Paused", "Running", "Stopped"):
-			raise ValueError("Requested status are not allowed")
+        # Get status with xpath
+        tasks = self._get_tasks()
+        status = tasks.find('.//task[@id="%s"]/status' % task_id)
 
-		m_task_ids = {}
+        if status is None:
+            raise ServerError("Task not found")
 
-		for x in self._get_tasks().findall("task"):
-			if x.find("status").text == status:
-				m_task_ids[x.find("name").text] = x.attrib["id"]
+        if status.text in ("Running", "Pause Requested", "Paused"):
+            h = tasks.findall('.//task[@id="%s"]/progress/host_progress/host' % task_id)
 
-		return m_task_ids
+            if h is not None:
+                m_progress_len += float(len(h))
+                m_sum_progress += sum([float(x.tail) for x in h])
 
-	# ----------------------------------------------------------------------
+        elif status.text in ("Delete Requested", "Done", "Stop Requested", "Stopped", "Internal Error"):
+            return 100.0  # Task finished
 
-	def get_results(self, task_id=None):
-		"""
-		Get the results associated to the scan ID.
+        try:
+            return m_sum_progress / m_progress_len
+        except ZeroDivisionError:
+            return 0.0
 
-		:param task_id: ID of scan to get. All if not provided
-		:type task_id: str
+    # ----------------------------------------------------------------------
 
-		:return: xml object
-		:rtype: `ElementTree`
+    def get_tasks_detail(self, task_id):
+        """
+        Get the xml of the details associated to the task ID.
 
-		:raises: ClientError, ServerError
-		"""
+        :param task_id: ID of task.
+        :type task_id: str
 
-		if task_id:
-			m_query = '<get_results task_id="%s"/>' % task_id
-		else:
-			m_query = '<get_results/>'
+        :return: xml object
+        :rtype: `ElementTree`
 
-		return self._manager.make_xml_request(m_query, xml_result=True)
+        :raises: ClientError, ServerError
+        """
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR REPORT
-	#
-	# ----------------------------------------------------------------------
+        if not isinstance(task_id, str):
+            raise TypeError("Expected string, got %r instead" % type(task_id))
 
-	def get_report_id(self, task_id):
-		"""
-		Get the report id associated to the task ID.
+        try:
+            m_response = self._manager.make_xml_request('<get_tasks task_id="%s" details="1"/>' % task_id,
+                                                        xml_result=True)
+        except ServerError as e:
+            raise VulnscanServerError("Can't get the detail for the task %s. Error: %s" % (task_id, e.message))
 
-		:param task_id: ID of scan to get.
-		:type task_id: str
+        return m_response
 
-		:return: ID of the report or None if the report isn't found
-		:rtype: str
+    # ----------------------------------------------------------------------
 
-		"""
-		m_response = self.get_tasks_detail(task_id)
+    def get_task_status(self, task_id):
+        """
+        Get task status
 
-		report = m_response.find('task').find('last_report')
+        :param task_id: ID of task to check.
+        :type task_id: str
 
-		if not report:
-			report = m_response.find('task').find("current_report")
+        :return: status of a task
+        :rtype: str
 
-		if report:
-			return report[0].get("id")
-		else:
-			return
+        :raises: ClientError, ServerError
+        """
+        if not isinstance(task_id, str):
+            raise TypeError("Expected string, got %r instead" % type(task_id))
 
-	# ----------------------------------------------------------------------
+        status = self._get_tasks().find('.//task[@id="%s"]/status' % task_id)
 
-	def get_report_html(self, report_id):
-		"""
-		Get the html associated to the report ID.
+        if status is None:
+            raise ServerError("Task not found")
 
-		:param report_id: ID of report to get.
-		:type report_id: str
+        return status.text
 
-		:return: base64 representing html page
-		:rtype: base64
+    # ----------------------------------------------------------------------
 
-		"""
-		if not isinstance(report_id, str):
-			raise TypeError("Expected string, got %r instead" % type(report_id))
+    def is_task_running(self, task_id):
+        """
+        Return true if task is running
 
-		m_response = ""
+        :param task_id: ID of task to check.
+        :type task_id: str
 
-		try:
-			m_response = self._manager.make_xml_request(
-				'<get_reports report_id="%s" format_id="6c248850-1f62-11e1-b082-406186ea4fc5"/>' % report_id,
-				xml_result=True)
-		except ServerError as e:
-			print("Can't get the HTML for the report %s. Error: %s" % (report_id, e.message))
+        :return: bool
+        :rtype: bool
 
-		return m_response
+        :raises: ClientError, ServerError
+        """
 
-	# ----------------------------------------------------------------------
+        if not isinstance(task_id, str):
+            raise TypeError("Expected string, got %r instead" % type(task_id))
 
-	def get_report_xml(self, report_id):
-		"""
-		Get the xml associated to the report ID.
+        status = self.get_task_status(task_id)
 
-		:param report_id: ID of report to get.
-		:type report_id: str
+        if status is None:
+            raise ServerError("Task not found")
 
-		:return: xml object
-		:rtype: `ElementTree`
+        return status in ("Running", "Requested")
 
-		"""
-		if not isinstance(report_id, str):
-			raise TypeError("Expected string, got %r instead" % type(report_id))
+    # ----------------------------------------------------------------------
 
-		try:
-			m_response = self._manager.make_xml_request('<get_reports report_id="%s" />' % report_id, xml_result=True)
-		except ServerError as e:
-			print("Can't get the xml for the report %s. Error: %s" % (report_id, e.message))
+    def get_tasks_ids_by_status(self, status="Done"):
+        """
+        Get IDs of tasks of the server depending of their status.
 
-		return m_response
+        Allowed status are: "Done", "Paused", "Running", "Stopped".
 
-	# ----------------------------------------------------------------------
+        If name param is provided, only get the ID associated to this name.
 
-	def delete_report(self, report_id):
-		"""
-		Delete a report in OpenVAS server.
+        :param status: get task with this status
+        :type status: str - ("Done" |"Paused" | "Running" | "Stopped".)
 
-		:param report_id: report id
-		:type report_id: str
+        :return: a dict with the format: {task_name: task_ID}
 
-		:raises: AuditNotFoundError, ServerError
-		"""
-		request = """<delete_report report_id="%s" />""" % report_id
+        :raises: ClientError, ServerError
+        """
+        if status not in ("Done", "Paused", "Running", "Stopped"):
+            raise ValueError("Requested status are not allowed")
 
-		try:
-			self._manager.make_xml_request(request, xml_result=True)
-		except ClientError:
-			raise AuditNotFoundError()
+        m_task_ids = {}
 
-	# ----------------------------------------------------------------------
-	#
-	# METHODS FOR SYNC
-	#
-	# ----------------------------------------------------------------------
+        for x in self._get_tasks().findall("task"):
+            if x.find("status").text == status:
+                m_task_ids[x.find("name").text] = x.attrib["id"]
 
-	def sync_cert(self):
-		"""
-		Do the sync of cert.
-		"""
-		self._manager.make_xml_request('<sync_cert/>', xml_result=True)
+        return m_task_ids
 
-	# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
-	def sync_feed(self):
-		"""
-		Do the sync of feed.
-		"""
-		self._manager.make_xml_request('<sync_feed/>', xml_result=True)
+    def get_results(self, task_id=None):
+        """
+        Get the results associated to the scan ID.
 
-	# ----------------------------------------------------------------------
+        :param task_id: ID of scan to get. All if not provided
+        :type task_id: str
 
-	def sync_scap(self):
-		"""
-		Do the sync of scap.
-		"""
-		self._manager.make_xml_request('<sync_scap/>', xml_result=True)
+        :return: xml object
+        :rtype: `ElementTree`
 
-	# ----------------------------------------------------------------------
+        :raises: ClientError, ServerError
+        """
+
+        if task_id:
+            m_query = '<get_results task_id="%s"/>' % task_id
+        else:
+            m_query = '<get_results/>'
+
+        return self._manager.make_xml_request(m_query, xml_result=True)
+
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR REPORT
+    #
+    # ----------------------------------------------------------------------
+
+    def get_report_id(self, task_id):
+        """
+        Get the report id associated to the task ID.
+
+        :param task_id: ID of scan to get.
+        :type task_id: str
+
+        :return: ID of the report or None if the report isn't found
+        :rtype: str
+
+        """
+        m_response = self.get_tasks_detail(task_id)
+
+        report = m_response.find('task').find('last_report')
+
+        if not report:
+            report = m_response.find('task').find("current_report")
+
+        if report:
+            return report[0].get("id")
+        else:
+            return
+
+    # ----------------------------------------------------------------------
+
+    def get_report_html(self, report_id):
+        """
+        Get the html associated to the report ID.
+
+        :param report_id: ID of report to get.
+        :type report_id: str
+
+        :return: base64 representing html page
+        :rtype: base64
+
+        """
+        if not isinstance(report_id, str):
+            raise TypeError("Expected string, got %r instead" % type(report_id))
+
+        m_response = ""
+
+        try:
+            m_response = self._manager.make_xml_request(
+                '<get_reports report_id="%s" format_id="6c248850-1f62-11e1-b082-406186ea4fc5"/>' % report_id,
+                xml_result=True)
+        except ServerError as e:
+            print("Can't get the HTML for the report %s. Error: %s" % (report_id, e.message))
+
+        return m_response
+
+    # ----------------------------------------------------------------------
+
+    def get_report_xml(self, report_id):
+        """
+        Get the xml associated to the report ID.
+
+        :param report_id: ID of report to get.
+        :type report_id: str
+
+        :return: xml object
+        :rtype: `ElementTree`
+
+        """
+        if not isinstance(report_id, str):
+            raise TypeError("Expected string, got %r instead" % type(report_id))
+
+        try:
+            m_response = self._manager.make_xml_request('<get_reports report_id="%s" />' % report_id, xml_result=True)
+        except ServerError as e:
+            print("Can't get the xml for the report %s. Error: %s" % (report_id, e.message))
+
+        return m_response
+
+    # ----------------------------------------------------------------------
+
+    def delete_report(self, report_id):
+        """
+        Delete a report in OpenVAS server.
+
+        :param report_id: report id
+        :type report_id: str
+
+        :raises: AuditNotFoundError, ServerError
+        """
+        request = """<delete_report report_id="%s" />""" % report_id
+
+        try:
+            self._manager.make_xml_request(request, xml_result=True)
+        except ClientError:
+            raise AuditNotFoundError()
+
+    # ----------------------------------------------------------------------
+    #
+    # METHODS FOR SYNC
+    #
+    # ----------------------------------------------------------------------
+
+    def sync_cert(self):
+        """
+        Do the sync of cert.
+        """
+        self._manager.make_xml_request('<sync_cert/>', xml_result=True)
+
+    # ----------------------------------------------------------------------
+
+    def sync_feed(self):
+        """
+        Do the sync of feed.
+        """
+        self._manager.make_xml_request('<sync_feed/>', xml_result=True)
+
+    # ----------------------------------------------------------------------
+
+    def sync_scap(self):
+        """
+        Do the sync of scap.
+        """
+        self._manager.make_xml_request('<sync_scap/>', xml_result=True)
+
+    # ----------------------------------------------------------------------
