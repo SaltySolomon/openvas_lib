@@ -1082,6 +1082,44 @@ class VulnscanManager(object):
         return None
 
     # ----------------------------------------------------------------------
+
+    def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
+                       format=""):
+        """
+
+        Get credentials, At the moment NO support for custom filtering
+
+        :param credential_id: If filled it returns the credential with the id
+        :type credential_id: str
+
+        :param filter_uid: Use a filter via its id
+        :type filter: str
+
+        :param scanners: If True also returns the scanner(s) where the credential is used
+        :type scanners: bool
+
+        :param trash: If True only the trash will be searched
+        :type trash: bool
+
+        :param targets: If True, also the Targets where the credential is used will be returned
+        :type targets: bool
+
+        :param format: Changes how the credential is formated, options are key, rpm, deb and exe
+        :type format: str
+
+        :return: Returns an eTree Element with the credentials
+        """
+
+        try:
+            m_credentials = self.__manager.get_credentials(credential_id, filter_uid, scanners, trash, targets, format)
+
+
+        except ServerError as e:
+            raise e
+
+        return m_credentials
+
+    # ----------------------------------------------------------------------
     def delete_credential(self, credential_id):
         """
         Delete a credenital by ID
@@ -1096,10 +1134,10 @@ class VulnscanManager(object):
 
 
     # ----------------------------------------------------------------------
-    def modify_credential(self, credential_id, name="", login="", comment="", allow_insecure=False, password="",
+    def modify_credential(self, credential_id, name=None, login=None, comment=None, allow_insecure=False, password="",
                               key_phrase="", key_private=""):
         try:
-            m_credential_id = self.__manager.create_credential(credential_id, login, comment, copy, allow_insecure, password,
+            m_credential_id = self.__manager.modify_credential(credential_id, name, login, comment, allow_insecure, password,
                                                                key_phrase, key_private)
         except ServerError as e:
             raise e

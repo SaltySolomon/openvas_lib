@@ -685,23 +685,49 @@ class OMP(object):
         """
         raise NotImplementedError()
 
-        # ----------------------------------------------------------------------
-        def modify_credential(self, credential_id, name="", login="", comment="", allow_insecure=False, password="",
-                              key_phrase="", key_private=""):
-            """
+    # ----------------------------------------------------------------------
+    def modify_credential(self, credential_id, name=None, login=None, comment=None, allow_insecure=False, password=None,
+                              key_phrase=None, key_private=None):
+        """
+        :param self:
+        :param credential_id:
+        :param name:
+        :param login:
+        :param comment:
+        :param allow_insecure:
+        :param password:
+        :param key_phrase:
+        :param key_private:
+        :return:
+        """
 
-            :param self:
-            :param credential_id:
-            :param name:
-            :param login:
-            :param comment:
-            :param allow_insecure:
-            :param password:
-            :param key_phrase:
-            :param key_private:
-            :return:
-            """
+        raise NotImplementedError()
 
+    # ----------------------------------------------------------------------
+    def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
+                       format=""):
+        """
+
+        Get credentials, At the moment NO support for custom filtering
+
+        :param credential_id: If filled it returns the credential with the id
+        :type credential_id: str
+
+        :param filter_uid: Use a filter via its id
+        :type filter: str
+
+        :param scanners: If True also returns the scanner(s) where the credential is used
+        :type scanners: bool
+
+        :param trash: If True only the trash will be searched
+        :type trash: bool
+
+        :param targets: If True, also the Targets where the credential is used will be returned
+        :type targets: bool
+
+        :param format: Changes how the credential is formated, options are key, rpm, deb and exe
+        :return:
+        """
         raise NotImplementedError()
 
     # ----------------------------------------------------------------------

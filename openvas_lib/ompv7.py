@@ -372,41 +372,51 @@ class OMPv7(OMP):
     #
     # ----------------------------------------------------------------------
 
-    def create_credential(self, name, login, comment="", copy="", allow_insecure=False, password="", key_phrase="",
-                          key_private=""):
+    def create_credential(self, name, login, comment="", copy=None, allow_insecure=False, password=None, key_phrase=None,
+                          key_private=None):
         """
-        Creates a new credential in OpenVAS.
 
-        :param name: The name of the user to be created.
+        Creates a new credential, if a password is used it creates one with a password, if no credential is added then it will generate a new key.
+        Current Implementation only supports passwords and keys
+
+        :param name: The Name of the credential inside OVAS
         :type name: str
 
-        :param password: The password for the user.
+        :param login: The Username that will be used to login
+        :param login: str
+
+        :param comment: An optional string to describe the credential
+        :type comment: str
+
+        :param copy: This param takes the id of another credential and creates a copy of it. Using this parameter will only use the name and comment parameter
+                    and ignores all the other parameters
+        :type copy: str
+
+        :param allow_insecure: Default is false
+        :type allow_insecure: bool
+
+        :param password: Password for the credential
         :type password: str
 
-        :param role: A role of the user. If the role not exists in the roles dict then use a user role ID.
-        :type role: str
+        :param key_phrase: If the key is password protected then this param takes said password
+        :type key_phrase: str
 
-        :param allow_hosts: User access rules: 0 allow all and deny list of hosts (default), 1 deny all and allow list of hosts.
-        :type allow_hosts: int
+        :param key_private: The private key used to authenticate to the system
+        :type key_private: str
 
-        :param hosts: User access rules: a textual list of hosts (host access).
-        :type hosts: list
-
-        :param allow_ifaces: User access rules: 0 allow all and deny list of ifaces (default), 1 deny all and allow list of ifaces.
-        :type allow_ifaces: int
-
-        :param ifaces: User access rules: a textual list of ifaces (interfaces access).
-        :type ifaces: list
-
-        :return: the ID of the created user (UUID).
-        :rtype: str
-
+        :return: Returns the ID of the newly created credential as a string
+        :type return: str
         """
 
         request = """<create_credential>
                 <name>%s</name>
                 <comment>%s</comment>
-                <allow_insecure>%s</allow_insecure>""" % (name, comment, allow_insecure)
+                """ % (name, comment)
+
+        if allow_insecure is True:
+            request += """<allow_insecure>"1"</allow_insecure>"""
+        else:
+            request += """<allow_insecure>"0"</allow_insecure>"""
 
         if copy:
             request += """<copy>%s</copy>""" % copy
@@ -431,12 +441,60 @@ class OMPv7(OMP):
 
     # ----------------------------------------------------------------------
 
+    def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
+                        format=None):
+        """
+
+        Get credentials, At the moment NO support for custom filtering
+
+        :param credential_id: If filled it returns the credential with the id
+        :type credential_id: str
+
+        :param filter_uid: Use a filter via its id
+        :type filter: str
+
+        :param scanners: If True also returns the scanner(s) where the credential is used
+        :type scanners: bool
+
+        :param trash: If True only the trash will be searched
+        :type trash: bool
+
+        :param targets: If True, also the Targets where the credential is used will be returned
+        :type targets: bool
+
+        :param format: Changes how the credential is formated, options are key, rpm, deb and exe
+        :return:
+        """
+
+        formats = ["key", "rpm", "deb", "exe"]
+
+        request = """<get_credentials"""
+
+        if credential_id:
+            request += """ credential_id="%s"/""" % credential_id
+        if filter_uid:
+            request += """ filter_uid="%s"/""" % filter_uid
+        if scanners is True:
+            request += """ scanners="1"/"""
+        if trash is True:
+            request += """ trash="1"/"""
+        if targets is True:
+            request += """targets="1"/"""
+        if format in formats:
+            request += """ format="%s"/""" % format
+
+        request += """/>"""
+
+        return self._manager.make_xml_request(request, xml_result=True)
+
+    # ----------------------------------------------------------------------
+
     def delete_credential(self, credential_id):
         """
         Delete a credential in OpenVAS.
 
-        :param user_id: The ID of the user to be deleted. Overrides name.
-        :type user_id: str
+        :param credential_id: The ID of the credential to be deleted.
+        :type credential_id: str
 
         """
 
@@ -447,31 +505,45 @@ class OMPv7(OMP):
 
     # ----------------------------------------------------------------------
 
-    def modify_credential(self, credential_id, name="", login="", comment="", allow_insecure=False, password="", key_phrase="",
+    def modify_credential(self, credential_id, name=None, login=None, comment=None, allow_insecure=None, password=None, key_phrase=None,
                           key_private=""):
         """
 
-        Modify Credentials
+        Modify a credential with the ID credential_id
 
-        :param id:
-        :param name:
-        :param login:
-        :param comment:
-        :param allow_insecure:
-        :param password:
-        :param key_phrase:
-        :param key_private:
-        :return:
+        :param credential_id: The ID of the credential that should be modified
+        :type credential_id: str
+
+        :param name: The new name of the credential, if empty no change
+        :type name: str
+
+        :param login: The new username, if empty no change
+        :param login: str
+
+        :param comment: The new comment of the credential, if empty no change
+        :type comment: str
+
+        :param allow_insecure: Set the new state if allowed or not, if empty no change
+        :type allow_insecure: bool
+
+        :param password: Password for the credential, if empty no change
+        :type password: str
+
+        :param key_phrase: If the key is password protected then this param takes said password, if empty no change
+        :type key_phrase: str
+
+        :param key_private: The private key used to authenticate to the system, if empty no change
+        :type key_private: str
         """
 
         request = """<modify_credential credential_id="%s">""" % credential_id
 
         if name:
-            """<name>%s</name>""" % name
+            request += """<name>%s</name>""" % name
         if comment:
-                """<comment>%s</comment>""" % comment
+            request += """<comment>%s</comment>""" % comment
         if allow_insecure:
-                """<allow_insecure>%s</allow_insecure>""" % allow_insecure
+            request += """<allow_insecure>%s</allow_insecure>""" % allow_insecure
         if login:
             request += """<login>%s</login>""" % login
 
