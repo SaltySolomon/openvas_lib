@@ -405,7 +405,6 @@ class OMPv7(OMP):
         :type key_private: str
 
         :return: Returns the ID of the newly created credential as a string
-        :type return: str
         """
 
         request = """<create_credential>
@@ -440,9 +439,18 @@ class OMPv7(OMP):
         return self._manager.make_xml_request(request, xml_result=True).get("id")
 
     # ----------------------------------------------------------------------
+    def get_all_credential_ids(self):
+        m_return = {}
 
-    def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
-                        format=None):
+        credentials = self._get_credentials()
+
+        for x in credentials.findall("credential"):
+            m_return[x.find("name").text] = x.get("id")
+
+        return m_return
+
+    def _get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
+                         return_format=None):
         """
 
         Get credentials, At the moment NO support for custom filtering
@@ -451,7 +459,7 @@ class OMPv7(OMP):
         :type credential_id: str
 
         :param filter_uid: Use a filter via its id
-        :type filter: str
+        :type filter_uid: str
 
         :param scanners: If True also returns the scanner(s) where the credential is used
         :type scanners: bool
@@ -462,8 +470,10 @@ class OMPv7(OMP):
         :param targets: If True, also the Targets where the credential is used will be returned
         :type targets: bool
 
-        :param format: Changes how the credential is formated, options are key, rpm, deb and exe
-        :return:
+        :param return_format: Changes how the credential is formated, options are key, rpm, deb and exe
+        :type return_format: str
+
+        :return: Returns an Element Tree with all the credentials and filter
         """
 
         formats = ["key", "rpm", "deb", "exe"]
@@ -479,13 +489,27 @@ class OMPv7(OMP):
         if trash is True:
             request += """ trash="1"/"""
         if targets is True:
-            request += """targets="1"/"""
-        if format in formats:
-            request += """ format="%s"/""" % format
+            request += """ targets="1"/"""
+        if return_format in formats:
+            request += """ format="%s"/""" % return_format
 
         request += """/>"""
 
         return self._manager.make_xml_request(request, xml_result=True)
+
+
+    # ----------------------------------------------------------------------
+    def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
+                        return_format=None):
+
+        m_return = {}
+
+        credentials = self._get_credentials(credential_id, filter_uid, scanners, trash, targets, return_format)
+
+        for x in credentials.findall("credential"):
+            m_return[x.find("name").text] = x
+
+        return m_return
 
     # ----------------------------------------------------------------------
 
@@ -738,6 +762,45 @@ class OMPv7(OMP):
             return {name: m_return[name]}
         else:
             return m_return
+
+    # ----------------------------------------------------------------------
+    def create_config(self, name=None, comment=None, copy_id=None, config=None):
+        """
+        Create a new scanner_config, either as a copy of an existing one or via the content of an
+        <get_configs_response> Element.
+
+        If used copy_id, config will be ignored
+
+        :param name: The name of the new config, is optional, if left empty or not unique
+         it will use the existing name and append a number
+        :type name: str
+
+        :param comment: Adds a comment to the new config
+        :type comment: str
+
+        :param copy_id: The id of an existing config
+
+        :param config: The response Element of a get_config call
+        :type config: 'ElementTree"
+
+        :return: id of the new config
+        """
+
+        request = """<create_config>"""
+
+        if name:
+            request += """<name>%s</name>""" % name
+        if comment:
+            request += """<comment>%s</comment>""" % comment
+        if copy_id:
+            request += """<copy>%s</copy>""" % copy_id
+        elif config:
+            request += etree.dump(config)
+
+        request += """</create_config>"""
+
+        return self._manager.make_xml_request(request,xml_result=True).get("id")
+
 
     # ----------------------------------------------------------------------
     #
@@ -1006,7 +1069,6 @@ class OMPv7(OMP):
                                                   xml_result=True).find('.//task[@id="%s"]' % task_id)
         else:
             return self._manager.make_xml_request("<get_tasks />", xml_result=True)
-
 
     def get_tasks(self, task_id=None):
         """

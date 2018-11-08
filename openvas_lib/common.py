@@ -704,8 +704,19 @@ class OMP(object):
         raise NotImplementedError()
 
     # ----------------------------------------------------------------------
+
+    def get_all_credential_ids(self):
+        """
+
+
+        :return:
+        """
+
+        raise NotImplementedError()
+
+    # ----------------------------------------------------------------------
     def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
-                       format=""):
+                       return_format=None):
         """
 
         Get credentials, At the moment NO support for custom filtering
@@ -760,6 +771,33 @@ class OMP(object):
 
         :raises: ClientError, ServerError
         """
+        raise NotImplementedError()
+
+    # ----------------------------------------------------------------------
+    def create_config(self, name=None, comment=None, copy_id=None, config=None):
+        """
+        Create a new scanner_config, either as a copy of an existing one or via the content of an
+        <get_configs_response> Element.
+
+        If used copy_id, config will be ignored
+
+        :param name: The name of the new config, is optional, if left empty or not unique
+         it will use the existing name and append a number
+        :type name: str
+
+        :param comment: Adds a comment to the new config
+        :type comment: str
+
+        :param copy_id: The id of an existing config
+
+        :param config: The response Element of a get_config call
+        :type config: 'ElementTree"
+
+        :return: id of the new config
+
+        :raises: ClientError, ServerError
+        """
+
         raise NotImplementedError()
 
     # ----------------------------------------------------------------------

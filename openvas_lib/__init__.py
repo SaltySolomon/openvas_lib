@@ -1084,7 +1084,7 @@ class VulnscanManager(object):
     # ----------------------------------------------------------------------
 
     def get_credentials(self, credential_id=None, filter_uid=None, scanners=False, trash=False, targets=False,
-                       format=""):
+                       return_format=None):
         """
 
         Get credentials, At the moment NO support for custom filtering
@@ -1093,7 +1093,7 @@ class VulnscanManager(object):
         :type credential_id: str
 
         :param filter_uid: Use a filter via its id
-        :type filter: str
+        :type filter_uid: str
 
         :param scanners: If True also returns the scanner(s) where the credential is used
         :type scanners: bool
@@ -1104,15 +1104,14 @@ class VulnscanManager(object):
         :param targets: If True, also the Targets where the credential is used will be returned
         :type targets: bool
 
-        :param format: Changes how the credential is formated, options are key, rpm, deb and exe
-        :type format: str
+        :param return_format: Changes how the credential is formated, options are key, rpm, deb and exe
+        :type return_format: str
 
         :return: Returns an eTree Element with the credentials
         """
 
         try:
             m_credentials = self.__manager.get_credentials(credential_id, filter_uid, scanners, trash, targets, format)
-
 
         except ServerError as e:
             raise e
@@ -1132,7 +1131,6 @@ class VulnscanManager(object):
         except ServerError as e:
             raise e
 
-
     # ----------------------------------------------------------------------
     def modify_credential(self, credential_id, name=None, login=None, comment=None, allow_insecure=False, password="",
                               key_phrase="", key_private=""):
@@ -1144,6 +1142,26 @@ class VulnscanManager(object):
         if m_credential_id:
             return m_credential_id
         return None
+
+    def create_config(self, name=None, comment=None, copy_id=None, config=None):
+
+        try:
+            m_config = self.__manager.create_config(name, comment, copy_id, config)
+        except ServerError as e:
+            raise e
+        if m_config:
+            return m_config
+        return None
+
+    # ----------------------------------------------------------------------
+    @property
+    def get_all_credentials(self):
+        """
+
+        :return: All credentials
+        :rtype: {credential: ID}
+        """
+        return self.__manager.get_all_credential_ids()
 
     # ----------------------------------------------------------------------
     @property
