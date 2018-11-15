@@ -48,25 +48,25 @@ __all__ = ["OMPv4"]
 # ------------------------------------------------------------------------------
 class OMPv4(OMP):
 	"""
-    Internal manager for OpenVAS low level operations.
+	Internal manager for OpenVAS low level operations.
 
-    ..note:
-        This class is based in code from the original OpenVAS plugin:
+	..note:
+		This class is based in code from the original OpenVAS plugin:
 
-        https://pypi.python.org/pypi/OpenVAS.omplib
+		https://pypi.python.org/pypi/OpenVAS.omplib
 
-    ..warning:
-        This code is only compatible with OMP 4.0.
-    """
+	..warning:
+		This code is only compatible with OMP 4.0.
+	"""
 
 	# ----------------------------------------------------------------------
 	def __init__(self, omp_manager):
 		"""
-        Constructor.
+		Constructor.
 
-        :param omp_manager: _OMPManager object.
-        :type omp_manager: ConnectionManager
-        """
+		:param omp_manager: _OMPManager object.
+		:type omp_manager: ConnectionManager
+		"""
 		# Call to super
 		super(OMPv4, self).__init__(omp_manager)
 
@@ -77,13 +77,13 @@ class OMPv4(OMP):
 	# ----------------------------------------------------------------------
 	def delete_task(self, task_id):
 		"""
-        Delete a task in OpenVAS server.
+		Delete a task in OpenVAS server.
 
-        :param task_id: task id
-        :type task_id: str
+		:param task_id: task id
+		:type task_id: str
 
-        :raises: AuditNotFoundError, ServerError
-        """
+		:raises: AuditNotFoundError, ServerError
+		"""
 		request = """<delete_task task_id="%s" />""" % task_id
 
 		try:
@@ -94,13 +94,13 @@ class OMPv4(OMP):
 	# ----------------------------------------------------------------------
 	def stop_task(self, task_id):
 		"""
-        Stops a task in OpenVAS server.
+		Stops a task in OpenVAS server.
 
-        :param task_id: task id
-        :type task_id: str
+		:param task_id: task id
+		:type task_id: str
 
-        :raises: ServerError, AuditNotFoundError
-        """
+		:raises: ServerError, AuditNotFoundError
+		"""
 
 		request = """<stop_task task_id="%s" />""" % task_id
 		try:
@@ -111,37 +111,37 @@ class OMPv4(OMP):
 	# ----------------------------------------------------------------------
 	def create_task(self, name, target, config=None, schedule=None, comment=""):
 		"""
-        Creates a task in OpenVAS.
+		Creates a task in OpenVAS.
 
-        :param name: name to the task
-        :type name: str
+		:param name: name to the task
+		:type name: str
 
-        :param target: target to scan
-        :type target: str
+		:param target: target to scan
+		:type target: str
 
-        :param config: config (profile) name
-        :type config: str
+		:param config: config (profile) name
+		:type config: str
 
-        :param schedule: schedule ID to use.
-        :type schedule: str
+		:param schedule: schedule ID to use.
+		:type schedule: str
 
-        :param comment: comment to add to task
-        :type comment: str
+		:param comment: comment to add to task
+		:type comment: str
 
-        :return: the ID of the task created.
-        :rtype: str
+		:return: the ID of the task created.
+		:rtype: str
 
-        :raises: ClientError, ServerError
-        """
+		:raises: ClientError, ServerError
+		"""
 
 		if not config:
 			config = "Full and fast"
 
 		request = """<create_task>
-            <name>%s</name>
-            <comment>%s</comment>
-            <config id="%s"/>
-            <target id="%s"/>""" % (name, comment, config, target)
+			<name>%s</name>
+			<comment>%s</comment>
+			<config id="%s"/>
+			<target id="%s"/>""" % (name, comment, config, target)
 		if schedule:
 			request += """<schedule>%s</schedule>""" % (schedule)
 		request += """</create_task>"""
@@ -151,27 +151,27 @@ class OMPv4(OMP):
 	# ----------------------------------------------------------------------
 	def create_port_list(self, name, port_range, comment=""):
 		"""
-        Creates a port list in OpenVAS.
+		Creates a port list in OpenVAS.
 
-        :param name: name to the port list
-        :type name: str
+		:param name: name to the port list
+		:type name: str
 
-        :param port_range: Port ranges. Should be a string of the form "T:22-80,U:53,88,1337"
-        :type port_range: str
+		:param port_range: Port ranges. Should be a string of the form "T:22-80,U:53,88,1337"
+		:type port_range: str
 
-        :param comment: comment to add to the port list
-        :type comment: str
+		:param comment: comment to add to the port list
+		:type comment: str
 
-        :return: the ID of the created target.
-        :rtype: str
+		:return: the ID of the created target.
+		:rtype: str
 
-        :raises: ClientError, ServerError TODO
-        """
+		:raises: ClientError, ServerError TODO
+		"""
 		request = """<create_port_list>
-	            <name>%s</name>
-	            <port_range>%s</port_range>
-	            <comment>%s</comment>
-    </create_port_list>""" % (name, port_range, comment)
+				<name>%s</name>
+				<port_range>%s</port_range>
+				<comment>%s</comment>
+	</create_port_list>""" % (name, port_range, comment)
 
 		return self._manager.make_xml_request(request, xml_result=True).get("id")
 
@@ -210,54 +210,54 @@ class OMPv4(OMP):
 		:raises: ClientError, ServerError
 		"""
 		request = """<create_schedule>
-	            <name>%s</name>
-	            <first_time>
-	            <hour>%s</hour>
-	            <minute>%s</minute>
-	            <month>%s</month>
-	            <day_of_month>%s</day_of_month>
-	            <year>%s</year>
-	            </first_time>
-	            <timezone>%s</timezone>
-	            <comment>%s</comment>""" % (name, hour, minute, month, day, year, timezone, "")
+				<name>%s</name>
+				<first_time>
+				<hour>%s</hour>
+				<minute>%s</minute>
+				<month>%s</month>
+				<day_of_month>%s</day_of_month>
+				<year>%s</year>
+				</first_time>
+				<timezone>%s</timezone>
+				<comment>%s</comment>""" % (name, hour, minute, month, day, year, timezone, "")
 		if duration:
 			request += """<duration>%s<unit>hour</unit></duration>""" % (duration)
 		else:
 			request += """<duration>0<unit>hour</unit></duration>"""
 		if period:
 			request += """<period>
-	            %s
-	            <unit>day</unit>
-	            </period>""" % (period)
+				%s
+				<unit>day</unit>
+				</period>""" % (period)
 		else:
 			request += """<period>0<unit>day</unit></period>"""
 		request += """
-    </create_schedule>"""
+	</create_schedule>"""
 
 		return self._manager.make_xml_request(request, xml_result=True).get("id")
 
 	# ----------------------------------------------------------------------
 	def create_target(self, name, hosts, comment="", port_list="Default"):
 		"""
-        Creates a target in OpenVAS.
+		Creates a target in OpenVAS.
 
-        :param name: name to the target
-        :type name: str
+		:param name: name to the target
+		:type name: str
 
-        :param hosts: target list. Can be only one target or a list of targets
-        :type hosts: str | list(str)
+		:param hosts: target list. Can be only one target or a list of targets
+		:type hosts: str | list(str)
 
-        :param comment: comment to add to task
-        :type comment: str
+		:param comment: comment to add to task
+		:type comment: str
 
-        :param port_list: Port List ID in the server to use for the target
-        :type comment: str
+		:param port_list: Port List ID in the server to use for the target
+		:type comment: str
 
-        :return: the ID of the created target.
-        :rtype: str
+		:return: the ID of the created target.
+		:rtype: str
 
-        :raises: ClientError, ServerError
-        """
+		:raises: ClientError, ServerError
+		"""
 		from collections import Iterable
 		if isinstance(hosts, str):
 			m_targets = hosts
@@ -265,11 +265,11 @@ class OMPv4(OMP):
 			m_targets = str(",".join(hosts))
 
 		request = """<create_target>
-	            <name>%s</name>
-	            <hosts>%s</hosts>
-	            <port_list>%s</port_list>
-	            <comment>%s</comment>
-    </create_target>""" % (name, m_targets, port_list, comment)
+				<name>%s</name>
+				<hosts>%s</hosts>
+				<port_list>%s</port_list>
+				<comment>%s</comment>
+	</create_target>""" % (name, m_targets, port_list, comment)
 
 		return self._manager.make_xml_request(request, xml_result=True).get("id")
 
@@ -349,7 +349,7 @@ class OMPv4(OMP):
 		# Recover all config from OpenVAS
 		if target_id:
 			return self._manager.make_xml_request('<get_targets id="%s"/>' % target_id,
-			                                      xml_result=True).find('.//target[@id="%s"]' % target_id)
+												  xml_result=True).find('.//target[@id="%s"]' % target_id)
 		else:
 			return self._manager.make_xml_request("<get_targets />", xml_result=True)
 
@@ -393,7 +393,7 @@ class OMPv4(OMP):
 		# Recover all config from OpenVAS
 		if task_id:
 			return self._manager.make_xml_request('<get_tasks id="%s"/>' % task_id,
-			                                      xml_result=True).find('.//task[@id="%s"]' % task_id)
+												  xml_result=True).find('.//task[@id="%s"]' % task_id)
 		else:
 			return self._manager.make_xml_request("<get_tasks />", xml_result=True)
 
@@ -559,7 +559,7 @@ class OMPv4(OMP):
 
 		try:
 			m_response = self._manager.make_xml_request('<get_tasks task_id="%s" details="1"/>' % scan_id,
-			                                            xml_result=True)
+														xml_result=True)
 		except ServerError as e:
 			raise VulnscanServerError("Can't get the detail for the task %s. Error: %s" % (scan_id, e.message))
 		return m_response

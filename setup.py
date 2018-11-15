@@ -50,7 +50,7 @@ VERSION = "{}.{}".format(MAJOR, os.environ.get('CIRCLE_BUILD_NUM', 4))
 setup(
 
     # Metadata.
-    name='openvas_lib',
+    name='openvas_lib_',
     packages=find_packages(),
     version=VERSION,
     description='OpenVAS Manager for OpenVAS 6 to 8 and XML report parser',

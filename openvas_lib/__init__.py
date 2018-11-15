@@ -614,7 +614,7 @@ class VulnscanManager(object):
         if not isinstance(profile, str):
             raise TypeError("Expected string, got %r instead" % type(profile))
 
-        schedule = kwargs.get("schedule",None)
+        schedule = kwargs.get("schedule", None)
 
         call_back_end = kwargs.get("callback_end", None)
         call_back_progress = kwargs.get("callback_progress", None)
@@ -672,7 +672,7 @@ class VulnscanManager(object):
                                                    schedule=schedule,
                                                    comment=comment)
         except ServerError as e:
-            raise VulnscanScanError("The target selected doesnn't exist in the server. Error: %s" % e.message)
+            raise VulnscanScanError("The target selected doesn't exist in the server. Error: %s" % e.message)
 
         # Start the scan
         try:
@@ -690,6 +690,31 @@ class VulnscanManager(object):
             self.__function_handle = self._callback(call_back_end, call_back_progress)
 
         return m_task_id, m_target_id
+
+    # ----------------------------------------------------------------------
+
+    def launch_scan_with_ids(self, name, target_id, config_id, schedule=None, comment="", max_checks=None, max_hosts=None):
+
+        try:
+            m_task_id = self.__manager.create_task(name=name,
+                                                   target=target_id,
+                                                   max_hosts=max_hosts,
+                                                   max_checks=max_checks,
+                                                   config=config_id,
+                                                   schedule=schedule,
+                                                   comment=comment)
+        except ServerError as e:
+            raise VulnscanScanError("The target selected doesn't exist in the server. Error: %s" % e.message)
+
+        try:
+            m_task_start_response = self.__manager.start_task(m_task_id)
+            self.__task_report_id = m_task_start_response.find("report_id").text
+        except ServerError as e:
+            raise VulnscanScanError(
+                "Unknown error while try to start the task '%s'. Error: %s" % (m_task_id, e.message))
+
+
+        return m_task_id
 
     # ----------------------------------------------------------------------
     @property
@@ -813,7 +838,7 @@ class VulnscanManager(object):
         return self.__manager.get_tasks_schedules(schedule_id)
 
     # ----------------------------------------------------------------------
-    def create_target(self, name, hosts, comment="", port_list="Default"):
+    def create_target(self, name, hosts, comment="", port_list=None, ssh_credential_id=None):
         """
         Creates a target in OpenVAS.
 
@@ -829,7 +854,7 @@ class VulnscanManager(object):
         :raises: ClientError, ServerError TODO
         """
         try:
-            m_target_id = self.__manager.create_target(name, hosts, comment, port_list)
+            m_target_id = self.__manager.create_target(name, hosts, comment, port_list, ssh_credential_id)
         except ServerError as e:
             raise VulnscanTargetError("Error while attempting to create target: %s" % e.message)
         return m_target_id
@@ -1076,7 +1101,10 @@ class VulnscanManager(object):
             m_credential_id = self.__manager.create_credential(name, login, comment, copy, allow_insecure, password, key_phrase,
             key_private)
         except ServerError as e:
-            raise e
+            raise VulnscanException(e)
+        except ClientError as e:
+            raise VulnscanException(e)
+
         if m_credential_id:
             return m_credential_id
         return None
@@ -1148,10 +1176,22 @@ class VulnscanManager(object):
         try:
             m_config = self.__manager.create_config(name, comment, copy_id, config)
         except ServerError as e:
-            raise e
+            raise VulnscanException(e)
+        except ClientError as e:
+            raise VulnscanException(e)
         if m_config:
             return m_config
         return None
+
+    # ----------------------------------------------------------------------
+    @property
+    def get_port_list_ids(self):
+        """
+
+        :return: All Port Lists
+        :rtype: {port_list_name: ID}
+        """
+        return self.__manager.get_port_list_ids()
 
     # ----------------------------------------------------------------------
     @property
